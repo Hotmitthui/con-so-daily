@@ -48,6 +48,8 @@ certificates
 # Local-only project files
 /public/opencv.js
 /public/book/
+/public/sw.js
+/public/workbox-*.js
 
 # cloudflare & open-next
 .open-next
