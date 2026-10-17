@@ -16,12 +16,14 @@ import {
   Search,
   Store,
   Trash2,
+  Calendar,
   Volume2,
   X,
   Zap,
 } from "lucide-react";
 import { createClient } from "@supabase/supabase-js";
 import { useSpeechToNumber } from "@/components/hooks/useSpeechToNumber";
+import DatePickerVN from "@/components/DatePickerVN";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseKey =
@@ -34,6 +36,25 @@ const getTodayInVietnam = () =>
   new Intl.DateTimeFormat("en-CA", {
     timeZone: "Asia/Ho_Chi_Minh",
   }).format(new Date());
+
+const VIETNAMESE_DAYS = ["Chủ Nhật", "Thứ Hai", "Thứ Ba", "Thứ Tư", "Thứ Năm", "Thứ Sáu", "Thứ Bảy"];
+
+const formatVietnameseDate = (dateStr: string) => {
+  if (!dateStr) return "";
+  const [y, m, d] = dateStr.split("-").map(Number);
+  if (!y || !m || !d) return dateStr;
+  const dateObj = new Date(y, m - 1, d);
+  const dayName = VIETNAMESE_DAYS[dateObj.getDay()] || "";
+  return `${dayName}, ${String(d).padStart(2, "0")}/${String(m).padStart(2, "0")}/${y}`;
+};
+
+const getRelativeDateString = (offsetDays: number) => {
+  const d = new Date();
+  d.setDate(d.getDate() + offsetDays);
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Ho_Chi_Minh",
+  }).format(d);
+};
 
 // Danh sách đài xổ mặc định theo thứ (fallback khi chưa load từ bảng daiso)
 // 0: Chủ Nhật, 1: Thứ 2, ..., 6: Thứ 7 (khớp với Date.getDay())
@@ -236,36 +257,39 @@ export default function AgencyManagementPage() {
     return cabinets.find((c) => c.id === selectedCabinetId) || cabinets[0];
   }, [cabinets, selectedCabinetId]);
 
+  // Quản lý trạng thái kết nối Cloudflare D1
+  const [d1Status, setD1Status] = useState<"loading" | "connected" | "error">("loading");
+
   // Tải danh sách Tủ vé của đại lý từ Cloudflare D1 khi đổi đại lý
-  useEffect(() => {
+  const loadCabinets = useCallback(async () => {
     if (!agencySlug) return;
-    let isCancelled = false;
     setIsLoadingCabinets(true);
-
-    const loadCabinets = async () => {
-      try {
-        const res = await fetch(`/api/quanly/cabinets?agencySlug=${agencySlug}`);
-        const json = await res.json();
-        if (!isCancelled && json.success && json.data) {
-          const list: CabinetItem[] = json.data.cabinets || [];
-          if (list.length > 0) {
-            setCabinets(list);
-            const defaultCab = list.find((c) => c.is_default) || list[0];
-            setSelectedCabinetId(defaultCab.id);
-          }
+    setD1Status("loading");
+    try {
+      const res = await fetch(`/api/quanly/cabinets?agencySlug=${agencySlug}`);
+      const json = await res.json();
+      if (json.success && json.data) {
+        const list: CabinetItem[] = json.data.cabinets || [];
+        if (list.length > 0) {
+          setCabinets(list);
+          const defaultCab = list.find((c) => c.is_default) || list[0];
+          setSelectedCabinetId(defaultCab.id);
         }
-      } catch (err) {
-        console.warn("Lỗi tải danh sách tủ vé từ D1:", err);
-      } finally {
-        if (!isCancelled) setIsLoadingCabinets(false);
+        setD1Status("connected");
+      } else {
+        setD1Status("error");
       }
-    };
-
-    loadCabinets();
-    return () => {
-      isCancelled = true;
-    };
+    } catch (err) {
+      console.warn("Lỗi tải danh sách tủ vé từ D1:", err);
+      setD1Status("error");
+    } finally {
+      setIsLoadingCabinets(false);
+    }
   }, [agencySlug]);
+
+  useEffect(() => {
+    loadCabinets();
+  }, [loadCabinets]);
 
   // Khi đổi ngày vé hoặc vừa tải đài xong, tự động chọn đài mặc định ưu tiên của ngày đó
   useEffect(() => {
@@ -741,10 +765,27 @@ export default function AgencyManagementPage() {
                 </h1>
               </div>
             </div>
-            <span className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-bold text-emerald-800 flex items-center gap-1.5 shadow-xs">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              CLOUDFLARE D1 · ĐÃ KẾT NỐI
-            </span>
+            {d1Status === "loading" ? (
+              <span className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs font-bold text-amber-800 flex items-center gap-1.5 shadow-xs">
+                <span className="w-2 h-2 rounded-full bg-amber-500 animate-ping" />
+                CLOUDFLARE D1 · ĐANG KẾT NỐI...
+              </span>
+            ) : d1Status === "connected" ? (
+              <span className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-bold text-emerald-800 flex items-center gap-1.5 shadow-xs">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                CLOUDFLARE D1 · ĐÃ KẾT NỐI ({cabinets.length} TỦ VÉ)
+              </span>
+            ) : (
+              <button
+                type="button"
+                onClick={() => loadCabinets()}
+                className="rounded-full border border-rose-200 bg-rose-50 px-3 py-1.5 text-xs font-bold text-rose-700 flex items-center gap-1.5 shadow-xs hover:bg-rose-100 transition-colors cursor-pointer"
+                title="Bấm để thử kết nối lại"
+              >
+                <span className="w-2 h-2 rounded-full bg-rose-500" />
+                CLOUDFLARE D1 · LỖI TẢI (THỬ LẠI)
+              </button>
+            )}
           </div>
 
           <div className="mt-5 rounded-2xl bg-slate-50 p-4 text-sm">
@@ -920,15 +961,11 @@ export default function AgencyManagementPage() {
 
           {/* Chọn ngày vé và đài xổ */}
           <div className="grid sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Chọn ngày vé</label>
-              <input
-                type="date"
-                value={ticketDate}
-                onChange={(event) => setTicketDate(event.target.value)}
-                className="w-full p-3 border border-slate-200 rounded-xl focus:outline-none focus:border-purple-500 bg-white"
-              />
-            </div>
+            <DatePickerVN
+              value={ticketDate}
+              onChange={setTicketDate}
+              label="Chọn ngày vé"
+            />
             <div>
               <div className="flex items-center justify-between mb-1.5">
                 <label className="block text-sm font-medium text-slate-700">

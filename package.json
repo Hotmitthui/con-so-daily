@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev --webpack -H 0.0.0.0",
-    "build": "npx @opennextjs/cloudflare build",
+    "build": "node -e \"if(process.env.VERCEL){require('child_process').execSync('npm run build:next',{stdio:'inherit'})}else{require('child_process').execSync('npm run build:cf',{stdio:'inherit'})}\"",
     "build:next": "next build --webpack",
     "build:cf": "npx @opennextjs/cloudflare build",
     "start": "next start",

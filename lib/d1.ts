@@ -23,6 +23,46 @@ function getCloudflareAccountId(): string {
   return match ? match[1] : "3fdaafe0e20a9e15370f99486db92bf3";
 }
 
+interface D1DatabaseNative {
+  prepare: (query: string) => {
+    bind: (...params: unknown[]) => {
+      all: <T = unknown>() => Promise<{ results: T[]; success: boolean }>;
+      run: () => Promise<{ success: boolean; meta?: { changes?: number; last_row_id?: number } }>;
+    };
+  };
+}
+
+async function getNativeD1(): Promise<D1DatabaseNative | null> {
+  // 1. Thử dùng getCloudflareContext từ @opennextjs/cloudflare (OpenNext chính thức)
+  try {
+    const { getCloudflareContext } = await import("@opennextjs/cloudflare");
+    const ctx = await getCloudflareContext({ async: true });
+    if (ctx?.env && "DB" in ctx.env) {
+      const db = (ctx.env as Record<string, unknown>).DB as D1DatabaseNative;
+      if (db && typeof db.prepare === "function") return db;
+    }
+  } catch {}
+
+  // 2. Thử qua Symbol.__cloudflare-context__ của workerd ALS
+  try {
+    const store = (globalThis as unknown as Record<symbol, { env?: { DB?: D1DatabaseNative } }>)[
+      Symbol.for("__cloudflare-context__")
+    ];
+    if (store?.env?.DB && typeof store.env.DB.prepare === "function") {
+      return store.env.DB;
+    }
+  } catch {}
+
+  // 3. Fallback qua __CF_ENV__ hoặc globalThis.env
+  try {
+    const cf = globalThis as unknown as { __CF_ENV__?: { DB?: D1DatabaseNative }; env?: { DB?: D1DatabaseNative } };
+    const db = cf.__CF_ENV__?.DB || cf.env?.DB;
+    if (db && typeof db.prepare === "function") return db;
+  } catch {}
+
+  return null;
+}
+
 /**
  * Thực thi câu lệnh SELECT trên Cloudflare D1
  */
@@ -30,27 +70,25 @@ export async function queryD1<T = unknown>(
   sql: string,
   params: (string | number | boolean | null)[] = []
 ): Promise<T[]> {
-  // 1. Thử dùng Native Binding nếu đang chạy trên Cloudflare Pages
+  // 1. Thử dùng Native Binding nếu đang chạy trên Cloudflare
   try {
-    // @ts-expect-error OpenNext Cloudflare runtime binding
-    const cfContext = globalThis.__CF_ENV__ || (globalThis as unknown as { env?: { DB?: { prepare: (q: string) => { bind: (...p: unknown[]) => { all: () => Promise<{ results: T[] }> } } } } }).env;
-    const db = cfContext?.DB;
-    if (db && typeof db.prepare === "function") {
-      const stmt = db.prepare(sql).bind(...params);
-      const res = await stmt.all();
+    const nativeDb = await getNativeD1();
+    if (nativeDb) {
+      const stmt = nativeDb.prepare(sql).bind(...params);
+      const res = await stmt.all<T>();
       return (res.results || []) as T[];
     }
-  } catch {
-    // Fallback sang REST API
+  } catch (nativeErr) {
+    console.warn("Lỗi khi truy vấn qua Native D1 Binding, thử fallback REST API:", nativeErr);
   }
 
   // 2. Chạy qua Cloudflare D1 REST API (Môi trường Local / Vercel)
   const accountId = getCloudflareAccountId();
-  const databaseId = process.env.CF_D1_DATABASE_ID;
+  const databaseId = process.env.CF_D1_DATABASE_ID || "4ba8f2b3-8a52-472f-893b-b62a446b41ff";
   const apiToken = process.env.CF_API_TOKEN || process.env.CLOUDFLARE_API_TOKEN;
 
   if (!databaseId || !apiToken) {
-    throw new Error("Thiếu cấu hình CF_D1_DATABASE_ID hoặc CF_API_TOKEN trong .env.local!");
+    throw new Error("Thiếu cấu hình CF_D1_DATABASE_ID hoặc CF_API_TOKEN trong biến môi trường!");
   }
 
   const url = `https://api.cloudflare.com/client/v4/accounts/${accountId}/d1/database/${databaseId}/query`;
@@ -91,11 +129,9 @@ export async function executeD1(
 ): Promise<{ success: boolean; changes?: number; lastRowId?: number }> {
   // 1. Thử dùng Native Binding
   try {
-    // @ts-expect-error OpenNext Cloudflare runtime binding
-    const cfContext = globalThis.__CF_ENV__ || (globalThis as unknown as { env?: { DB?: { prepare: (q: string) => { bind: (...p: unknown[]) => { run: () => Promise<{ success: boolean; meta?: { changes?: number; last_row_id?: number } }> } } } } }).env;
-    const db = cfContext?.DB;
-    if (db && typeof db.prepare === "function") {
-      const stmt = db.prepare(sql).bind(...params);
+    const nativeDb = await getNativeD1();
+    if (nativeDb) {
+      const stmt = nativeDb.prepare(sql).bind(...params);
       const res = await stmt.run();
       return {
         success: res.success,
@@ -103,13 +139,13 @@ export async function executeD1(
         lastRowId: res.meta?.last_row_id,
       };
     }
-  } catch {
-    // Fallback sang REST API
+  } catch (nativeErr) {
+    console.warn("Lỗi khi execute qua Native D1 Binding, thử fallback REST API:", nativeErr);
   }
 
   // 2. Chạy qua REST API
   const accountId = getCloudflareAccountId();
-  const databaseId = process.env.CF_D1_DATABASE_ID;
+  const databaseId = process.env.CF_D1_DATABASE_ID || "4ba8f2b3-8a52-472f-893b-b62a446b41ff";
   const apiToken = process.env.CF_API_TOKEN || process.env.CLOUDFLARE_API_TOKEN;
 
   if (!databaseId || !apiToken) {
