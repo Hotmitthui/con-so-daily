@@ -17,6 +17,7 @@ type D1QueryResult<T = unknown> = {
 };
 
 function getCloudflareAccountId(): string {
+  if (process.env.D1_ACCOUNT_ID) return process.env.D1_ACCOUNT_ID;
   if (process.env.CF_ACCOUNT_ID) return process.env.CF_ACCOUNT_ID;
   const endpoint = process.env.R2_ENDPOINT || "";
   const match = endpoint.match(/https:\/\/([a-f0-9]{32})\.r2\.cloudflarestorage\.com/);
@@ -84,11 +85,17 @@ export async function queryD1<T = unknown>(
 
   // 2. Chạy qua Cloudflare D1 REST API (Môi trường Local / Vercel)
   const accountId = getCloudflareAccountId();
-  const databaseId = process.env.CF_D1_DATABASE_ID || "4ba8f2b3-8a52-472f-893b-b62a446b41ff";
-  const apiToken = process.env.CF_API_TOKEN || process.env.CLOUDFLARE_API_TOKEN;
+  const databaseId =
+    process.env.D1_DATABASE_ID ||
+    process.env.CF_D1_DATABASE_ID ||
+    "4ba8f2b3-8a52-472f-893b-b62a446b41ff";
+  const apiToken =
+    process.env.D1_API_TOKEN ||
+    process.env.CF_API_TOKEN ||
+    process.env.CLOUDFLARE_API_TOKEN;
 
   if (!databaseId || !apiToken) {
-    throw new Error("Thiếu cấu hình CF_D1_DATABASE_ID hoặc CF_API_TOKEN trong biến môi trường!");
+    throw new Error("Thiếu cấu hình D1_DATABASE_ID hoặc D1_API_TOKEN trong biến môi trường!");
   }
 
   const url = `https://api.cloudflare.com/client/v4/accounts/${accountId}/d1/database/${databaseId}/query`;
@@ -145,11 +152,17 @@ export async function executeD1(
 
   // 2. Chạy qua REST API
   const accountId = getCloudflareAccountId();
-  const databaseId = process.env.CF_D1_DATABASE_ID || "4ba8f2b3-8a52-472f-893b-b62a446b41ff";
-  const apiToken = process.env.CF_API_TOKEN || process.env.CLOUDFLARE_API_TOKEN;
+  const databaseId =
+    process.env.D1_DATABASE_ID ||
+    process.env.CF_D1_DATABASE_ID ||
+    "4ba8f2b3-8a52-472f-893b-b62a446b41ff";
+  const apiToken =
+    process.env.D1_API_TOKEN ||
+    process.env.CF_API_TOKEN ||
+    process.env.CLOUDFLARE_API_TOKEN;
 
   if (!databaseId || !apiToken) {
-    throw new Error("Thiếu cấu hình CF_D1_DATABASE_ID hoặc CF_API_TOKEN trong .env.local!");
+    throw new Error("Thiếu cấu hình D1_DATABASE_ID hoặc D1_API_TOKEN trong .env.local!");
   }
 
   const url = `https://api.cloudflare.com/client/v4/accounts/${accountId}/d1/database/${databaseId}/query`;
