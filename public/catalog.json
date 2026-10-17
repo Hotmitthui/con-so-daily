@@ -1,0 +1,20 @@
+{
+  "affiliateCatalogs": [
+    "Tài chính",
+    "Khoá học",
+    "Tiêu dùng",
+    "Dịch vụ số",
+    "Thực phẩm Đồ uống"
+  ],
+  "affiliateOfferTypes": [
+    "Voucher",
+    "Sản phẩm",
+    "Dịch vụ",
+    "Mã giảm giá"
+  ],
+  "affiliateBrands": [
+    "Highlands Coffee",
+    "The Coffee House",
+    "Ding tea"
+  ]
+}

@@ -1,0 +1,198 @@
+{
+  "Bình Dương": {
+    "boxes": [
+      {
+        "top": 170,
+        "right": 20,
+        "width": 336,
+        "height": 68,
+        "kind": "main"
+      },
+      {
+        "top": 143,
+        "right": 362,
+        "width": 128,
+        "height": 35,
+        "kind": "small"
+      }
+    ],
+    "headBox": {
+      "offsetX": 0,
+      "offsetY": 0,
+      "size": 250
+    },
+    "cardWidth": 500,
+    "cardHeight": 246,
+    "tailLetterSpacingPx": 1
+  },
+  "Bình Phước": {
+    "boxes": [
+      {
+        "top": 151,
+        "right": 13,
+        "width": 344,
+        "height": 90,
+        "kind": "main"
+      },
+      {
+        "top": 37,
+        "right": 183,
+        "width": 105,
+        "height": 30,
+        "kind": "small"
+      }
+    ],
+    "headBox": {
+      "offsetX": 0,
+      "offsetY": 0,
+      "size": 250
+    },
+    "cardWidth": 500,
+    "cardHeight": 250,
+    "tailLetterSpacingPx": 0
+  },
+  "Đồng Tháp": {
+    "boxes": [
+      {
+        "top": 171,
+        "right": 19,
+        "width": 280,
+        "height": 58,
+        "kind": "main"
+      },
+      {
+        "top": 68,
+        "right": 34,
+        "width": 92,
+        "height": 25,
+        "kind": "small"
+      }
+    ],
+    "headBox": {
+      "offsetX": 0,
+      "offsetY": 0,
+      "size": 230
+    },
+    "cardWidth": 500,
+    "cardHeight": 241,
+    "tailLetterSpacingPx": 0
+  },
+  "Lâm Đồng": {
+    "boxes": [
+      {
+        "top": 167,
+        "right": 12,
+        "width": 382,
+        "height": 75,
+        "kind": "main"
+      },
+      {
+        "top": 73,
+        "right": 13,
+        "width": 132,
+        "height": 30,
+        "kind": "small"
+      },
+      {
+        "top": 143,
+        "right": 364,
+        "width": 124,
+        "height": 27,
+        "kind": "small"
+      }
+    ],
+    "headBox": {
+      "offsetX": 0,
+      "offsetY": 0,
+      "size": 250
+    },
+    "cardWidth": 500,
+    "cardHeight": 254,
+    "tailLetterSpacingPx": 4
+  },
+  "Vũng Tàu": {
+    "boxes": [
+      {
+        "top": 163,
+        "right": 20,
+        "width": 288,
+        "height": 63,
+        "kind": "main"
+      },
+      {
+        "top": 55,
+        "right": 74,
+        "width": 110,
+        "height": 28,
+        "kind": "small"
+      }
+    ],
+    "headBox": {
+      "offsetX": 0,
+      "offsetY": 0,
+      "size": 250
+    },
+    "cardWidth": 500,
+    "cardHeight": 240,
+    "tailLetterSpacingPx": 0.1
+  },
+  "Sóc Trăng": {
+    "boxes": [
+      {
+        "top": 160,
+        "right": 16,
+        "width": 300,
+        "height": 71,
+        "kind": "main"
+      },
+      {
+        "top": 120,
+        "right": 32,
+        "width": 138,
+        "height": 32,
+        "kind": "small"
+      }
+    ],
+    "headBox": {
+      "offsetX": 0,
+      "offsetY": 0,
+      "size": 250
+    },
+    "cardWidth": 500,
+    "cardHeight": 240,
+    "tailLetterSpacingPx": 0
+  },
+  "Bình Thuận": {
+    "boxes": [
+      {
+        "top": 170,
+        "right": 17,
+        "width": 347,
+        "height": 65,
+        "kind": "main"
+      },
+      {
+        "top": 141,
+        "right": 368,
+        "width": 97,
+        "height": 34,
+        "kind": "small"
+      },
+      {
+        "top": 64,
+        "right": 24,
+        "width": 135,
+        "height": 29,
+        "kind": "small"
+      }
+    ],
+    "headBox": {
+      "offsetX": 2,
+      "offsetY": 0,
+      "size": 250
+    },
+    "cardWidth": 500,
+    "cardHeight": 245,
+    "tailLetterSpacingPx": 5
+  }
+}
